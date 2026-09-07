@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LearnMate AI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="page">
+
+    <header class="navbar">
+
+        <div class="logo">
+            📚 LearnMate
+        </div>
+
+        <div class="badge">
+            ✨ Smart Learning
+        </div>
+
+    </header>
+
+
+    <section class="hero">
+
+        <div class="hero-text">
+
+            <p class="welcome">
+                WELCOME TO YOUR LEARNING SPACE
+            </p>
+
+            <h1>
+                Learn what you need,
+                <span>the way you like.</span>
+            </h1>
+
+            <p class="intro">
+                Choose a topic, pick your language and start learning
+                with a simple study path made for you.
+            </p>
+
+        </div>
+
+
+        <div class="learning-card">
+
+            <div class="card-heading">
+
+                <div class="icon-box">
+                    🚀
+                </div>
+
+                <div>
+                    <h2>Start Learning</h2>
+                    <p>Create your learning path</p>
+                </div>
+
+            </div>
+
+
+            <label for="topic">
+                What do you want to learn?
+            </label>
+
+            <input
+                type="text"
+                id="topic"
+                placeholder="Eg: Python, DBMS, Machine Learning..."
+            >
+
+
+            <label for="language">
+                Choose your language
+            </label>
+
+            <select id="language">
+
+                <option value="English">English</option>
+
+                <option value="Tamil">
+                    தமிழ் (Tamil)
+                </option>
+
+                <option value="Hindi">
+                    हिन्दी (Hindi)
+                </option>
+
+                <option value="Telugu">
+                    తెలుగు (Telugu)
+                </option>
+
+                <option value="Malayalam">
+                    മലയാളം (Malayalam)
+                </option>
+
+                <option value="Kannada">
+                    ಕನ್ನಡ (Kannada)
+                </option>
+
+            </select>
+
+
+            <label for="goal">
+                What is your goal?
+            </label>
+
+            <select id="goal">
+
+                <option value="Understand">
+                    Understand the basics
+                </option>
+
+                <option value="Exam">
+                    Prepare for an exam
+                </option>
+
+                <option value="Practice">
+                    Practice the topic
+                </option>
+
+                <option value="Revision">
+                    Quick revision
+                </option>
+
+            </select>
+
+
+            <button onclick="startLearning()">
+                Start My Learning Path →
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <section id="result"></section>
+
+
+    <section class="features">
+
+        <div class="feature">
+
+            <div>💡</div>
+
+            <h3>Simple Learning</h3>
+
+            <p>
+                Understand difficult topics in an easier way.
+            </p>
+
+        </div>
+
+
+        <div class="feature">
+
+            <div>📝</div>
+
+            <h3>Quick Quiz</h3>
+
+            <p>
+                Test your understanding with short questions.
+            </p>
+
+        </div>
+
+
+        <div class="feature">
+
+            <div>🎯</div>
+
+            <h3>Study Path</h3>
+
+            <p>
+                Follow clear steps instead of guessing what to study.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <footer>
+        LearnMate AI · Learn smarter. Learn your way.
+    </footer>
+
+</div>
+
+
+<script>
+
+let currentQuiz = [];
+let currentQuestion = 0;
+let score = 0;
+
+
+async function startLearning() {
+
+    const topic = document.getElementById("topic").value.trim();
+    const language = document.getElementById("language").value;
+    const goal = document.getElementById("goal").value;
+    const result = document.getElementById("result");
+
+    if (!topic) {
+        result.innerHTML = `
+            <div class="message">
+                ⚠️ Please enter a topic to start learning.
+            </div>
+        `;
+        return;
+    }
+
+    result.innerHTML = `
+        <div class="loading">
+            ✨ Preparing your learning path...
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch("/learn", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                topic: topic,
+                language: language,
+                goal: goal
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "Server error");
+        }
+
+        currentQuiz = data.quiz;
+        currentQuestion = 0;
+        score = 0;
+
+        result.innerHTML = `
+
+            <div class="result-card">
+
+                <div class="result-top">
+                    <div>
+                        <p class="small-title">
+                            YOUR LEARNING PATH
+                        </p>
+
+                        <h2>📖 ${data.topic}</h2>
+                    </div>
+
+                    <div class="language-tag">
+                        🌐 ${data.language}
+                    </div>
+                </div>
+
+
+                <!-- EXPLANATION -->
+
+                <div class="section">
+
+                    <h3>💡 Simple Explanation</h3>
+
+                    <p>
+                        ${data.topic} is an important concept to learn.<br>
+                        Start by understanding its basic idea and purpose.<br>
+                        Learn the main concepts with simple examples.<br>
+                        Practice the topic using small questions and activities.<br>
+                        Regular practice will help you understand it better.
+                    </p>
+
+                </div>
+
+
+                <!-- STUDY PATH BUTTON -->
+
+                <div class="action-section">
+
+                    <button onclick="showStudyPath()">
+                        🎯 View Study Path →
+                    </button>
+
+                </div>
+
+
+                <!-- STUDY PATH -->
+
+                <div id="study-section"></div>
+
+
+                <!-- QUIZ -->
+
+                <div id="quiz-section"></div>
+
+            </div>
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        result.innerHTML = `
+            <div class="message">
+                ❌ Something went wrong. Please try again.
+            </div>
+        `;
+    }
+}
+
+
+function showStudyPath() {
+
+    const studySection = document.getElementById("study-section");
+
+    studySection.innerHTML = `
+
+        <div class="section">
+
+            <h3>🎯 Your Study Path</h3>
+
+            <div class="study-list">
+
+                <div class="study-item">
+                    <div class="number">1</div>
+                    <p>Understand the basic concept</p>
+                </div>
+
+                <div class="study-item">
+                    <div class="number">2</div>
+                    <p>Learn the important concepts</p>
+                </div>
+
+                <div class="study-item">
+                    <div class="number">3</div>
+                    <p>Study simple examples</p>
+                </div>
+
+                <div class="study-item">
+                    <div class="number">4</div>
+                    <p>Practice with questions</p>
+                </div>
+
+                <div class="study-item">
+                    <div class="number">5</div>
+                    <p>Revise what you learned</p>
+                </div>
+
+            </div>
+
+            <div class="action-section">
+
+                <button onclick="showQuiz()">
+                    📝 Start Quick Quiz →
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+function showQuiz() {
+
+    const quizSection = document.getElementById("quiz-section");
+
+    quizSection.innerHTML = `
+
+        <div class="section">
+
+            <h3>📝 Quick Quiz</h3>
+
+            <div id="quiz-area"></div>
+
+        </div>
+    `;
+
+    showQuestion();
+}
+
+
+function showQuestion() {
+
+    const quizArea = document.getElementById("quiz-area");
+
+    if (currentQuestion >= currentQuiz.length) {
+
+        quizArea.innerHTML = `
+
+            <div class="quiz-finished">
+
+                <h3>🎉 Quiz Completed!</h3>
+
+                <p>
+                    Your Score:
+                    <strong>
+                        ${score} / ${currentQuiz.length}
+                    </strong>
+                </p>
+
+                <button onclick="restartQuiz()">
+                    🔄 Try Again
+                </button>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const quiz = currentQuiz[currentQuestion];
+
+    quizArea.innerHTML = `
+
+        <div class="question-box">
+
+            <p class="question-number">
+                Question ${currentQuestion + 1}
+                of ${currentQuiz.length}
+            </p>
+
+            <h3>
+                ${quiz.question}
+            </h3>
+
+            <div class="options">
+
+                ${quiz.options.map((option, index) => `
+
+                    <button
+                        class="option-btn"
+                        onclick="selectAnswer(${index})"
+                    >
+
+                        <span>
+                            ${String.fromCharCode(65 + index)}
+                        </span>
+
+                        ${option}
+
+                    </button>
+
+                `).join("")}
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+function selectAnswer(index) {
+
+    const quiz = currentQuiz[currentQuestion];
+
+    const buttons =
+        document.querySelectorAll(".option-btn");
+
+    buttons.forEach(button => {
+        button.disabled = true;
+    });
+
+
+    if (quiz.options[index] === quiz.answer) {
+
+        buttons[index].classList.add("correct");
+
+        score++;
+
+    } else {
+
+        buttons[index].classList.add("wrong");
+
+        quiz.options.forEach((option, i) => {
+
+            if (option === quiz.answer) {
+                buttons[i].classList.add("correct");
+            }
+
+        });
+    }
+
+
+    setTimeout(() => {
+
+        currentQuestion++;
+
+        showQuestion();
+
+    }, 900);
+}
+
+
+function restartQuiz() {
+
+    currentQuestion = 0;
+    score = 0;
+
+    showQuestion();
+}
+
+</script>
+</body>
+</html>
